@@ -1,70 +1,80 @@
 # Process overview
 
-<!-- TEMPLATE: this file is a shape to fill in, not a form. Replace everything
-     in it with your own overview, and delete this comment — `pnpm
-     check:evidence` will remind you if it's still here. -->
-
-A reading-guide to how the work came together --- a map to your process, not an
-essay about it. Markers read this file and follow its citations; they don't
-trawl the repo for evidence you didn't point at, so if a moment mattered, cite
-it.
-
-This file is the shape; the course site's
-[assessment page](https://comp.anu.edu.au/courses/comp4020-agentic-coding-studio/topics/assessment/#what-you-submit)
-is the requirement, and its
-[word counts](https://comp.anu.edu.au/courses/comp4020-agentic-coding-studio/topics/assessment/#word-counts)
-cover every deliverable.
-
 ## What I built
 
-One paragraph: the thing, and the idea behind it.
+A hand-drawn downhill skiing game rendered on `<canvas>` with deterministic,
+seed-based obstacle placement (no `Math.random()`, so a run is reproducible).
+The skier steers left/right across three lanes, jumps with a debounced
+edge-triggered key press, and has to clear single rocks, two-lane gates, and
+full three-lane rock walls that can only be passed by jumping. A run ends in a
+win or a wipeout, awards a distance-plus-clearance score, and keeps a local
+top-5 leaderboard in `localStorage` across reloads.
 
 ## The moments that mattered
 
-Three or four for an assignment; fewer is fine for a weekly prototype. Keep the
-list short so each moment has room to do all four jobs:
+1. **Terrain/world consistency correction.** Early obstacle and slope math
+   didn't agree with the parallax mountain layers, so lane positions drifted
+   against the background at higher speeds. I reworked `slope.ts`'s
+   world-to-screen conversion and the `state.ts` lane constants so obstacles,
+   player, and terrain share one coordinate system. Checked by scrubbing a full
+   run in the browser at multiple speeds and confirming lanes track straight
+   against the mountain silhouette instead of sliding sideways.
 
-1. **what happened** --- the problem, or the thing that went wrong
-2. **what you did instead of the obvious thing** --- the call you made, and why
-   it beat the obvious one
-3. **how you knew it was right** --- the check you ran, the viewport you looked
-   at, what you read before accepting the diff
-4. **the citation** --- a commit or commit range, a `CLAUDE.md` change, a check
-   that went from red to green, a prompt paired with the commit it produced
+2. **Obstacle difficulty progression and the three-rock wall.** I grouped
+   obstacle entries at the same `distance` value into singles, two-lane gates,
+   and full three-lane walls, spaced with increasing density down the course,
+   so difficulty ramps rather than staying flat. The wall specifically requires
+   a jump — `checkCollision` only clears an obstacle once
+   `jumpProgress >= JUMP_CLEARS_AT`, regardless of lane, which is what makes
+   jumping a wall's only valid response. Verified with a real-browser test that
+   scripted a no-jump run into the wall (wipeout) against a timed-jump run
+   through the same wall (survives), and cross-checked the obstacle course
+   itself by importing `createGameState()` directly in Node to confirm wall
+   positions in the generated course.
 
-Jobs 2 and 3 are the ones the repo can't tell a reader on its own, so they're
-where the marks are. The strongest moments are the ones where a correction
-landed in the **harness** --- the standards and checks your work has to satisfy
---- rather than in a retry: a rule added to `CLAUDE.md`, a check wired up, an
-attempt thrown away. Retrying until it passes is the routine case, and changing
-what the work runs against is the skilled one.
+3. **Jump feel.** The first jump implementation let a held key repeatedly
+   restart the jump arc, which made wall-clearing trivial and looked wrong.
+   I made the jump edge-triggered (`jumpKeyWasDown` debounce in `physics.ts`)
+   so a jump only starts on a fresh key press, with a fixed `JUMP_DURATION`
+   and a sine-based `jumpProgress` arc. Confirmed by holding the jump key down
+   during a run and watching the skier land and require a fresh press to jump
+   again, then re-running the wall test above to confirm timing still clears.
 
-Cite each moment as a link whose text is the commit hash or range and whose
-target is this repo's commit or compare URL, so a reader clicks straight to the
-evidence:
+4. **Score and local leaderboard.** Added `leaderboard.ts` (`saveScore`/
+   `loadScores`, top-5, `localStorage` key `downhill.local-scores.v1`) and
+   wired `main.ts` to save on win/loss and re-render the list. Verified two
+   ways: a Node script that shims `globalThis.localStorage` and calls the real
+   `saveScore` with seven scores to confirm correct top-5 truncation, and a
+   browser test that seeds six scores, reloads the page, and confirms the UI
+   and storage both show only the top five, descending.
 
-- one commit: [`a1b2c3d`](https://github.com/YOUR-ORG/YOUR-REPO/commit/a1b2c3d)
-- a range:
-  [`a1b2c3d...e4f5a6b`](https://github.com/YOUR-ORG/YOUR-REPO/compare/a1b2c3d...e4f5a6b)
+5. **Visual/character iterations.** The skier went through several passes on
+   the sketched art style (skis, jacket, scarf, arm/pole geometry) in
+   `render.ts` to read clearly as a skier rather than a stick figure at
+   gameplay scale, not just in close-up.
 
-To pair a prompt with the commit it produced, quote the prompt (curated, not a
-full transcript) next to the citation:
+6. **A change that came directly from playing the finished game.** Playing a
+   full run at real gameplay scale (not a zoomed-in screenshot) during final
+   verification, the trailing arm and ski pole were legible in close-up crops
+   but visually merged into the trailing leg/ski at actual size — the
+   back-limb "shade" colors are all near-identical dark tones, and the old
+   hand position landed almost exactly at hip height, in the same screen
+   region as the back leg. I repositioned the grounded back arm's elbow/hand
+   target higher and further back, into the shoulder/mid-back band, clear of
+   the leg cluster — a contrast/positioning-only fix, no new poses or
+   mechanics. Verified with `pnpm check` staying green and fresh screenshots
+   at gameplay scale (not cropped) confirming both arms and poles read as
+   distinct limbs, facing both directions and mid-air.
 
-> the prompt, verbatim
+7. **Finishing touches from the finalization pass.** The link-preview card
+   (`public/card.png`) and meta description were still the template's
+   placeholders through most of development. Replaced the card with a real
+   screenshot of the finished game and rewrote the description to describe
+   the actual skiing/jumping/leaderboard game instead of a "stickman."
 
-Screenshots are welcome where one carries the verification better than a
-sentence does. Commit the file to this repo and link it with a **relative**
-path, which is what makes it render on GitHub: `![alt text](docs/before.png)`.
-Images don't count towards the word count and don't replace the citation.
+Commits: [`abeef32`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit5-AbhaySKahlon/commit/abeef32) (initial template), [`e1e9c7e`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit5-AbhaySKahlon/commit/e1e9c7e) (Astro conversion), [`b3be195`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit5-AbhaySKahlon/commit/b3be195) (harness carried forward from crit4), and the final commit completing the game (see the repo's commit history for its hash).
 
 ## Before you ship
 
-`pnpm check:evidence` verifies your citations resolve to real commits, that a
-reflection entry the marker reads is in `reflections/`, and that your
-`CLAUDE.md` is there --- before a marker ever opens the file. It checks that
-your map is traceable, not that it is good: the marker judges whether your
-small, deliberately chosen set of moments shows real judgement and reflection. A
-green check is not a substitute for that curation.
-
-Images aren't checked: unlike a citation whose SHA doesn't resolve, a broken
-image is visible the moment this file is rendered on GitHub.
+`pnpm check` is green (typecheck, build, `oxlint`, `stylelint`, all vitest
+specs) and `pnpm check:evidence` passes.

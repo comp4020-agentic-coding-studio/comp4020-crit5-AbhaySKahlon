@@ -6,10 +6,10 @@ import "../styles/styles.css";
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>COMP4020 prototype</title>
+    <title>Downhill</title>
     <meta
       name="description"
-      content="Replace this with one sentence saying what this page is. A search result and a link preview both show it."
+      content="A hand-drawn downhill skiing game: steer around rocks and gates, jump the three-rock walls, and race to beat your local top-5 leaderboard."
     />
 
     <!--
@@ -20,20 +20,26 @@ import "../styles/styles.css";
     <meta property="og:type" content="website" />
     <meta property="og:image" content="./card.png" />
     <meta name="twitter:card" content="summary_large_image" />
-
   </head>
   <body>
     <header>
       <nav aria-label="Primary">
-        <a href="./">Home</a>
+        <a href="./">Downhill</a>
       </nav>
     </header>
     <main>
-      <h1>COMP4020 prototype</h1>
-      <p>
-        Replace this with your prototype. This week's brief is on the course website;
-        <code>spec/README.md</code> explains how the checks in this repo relate to it.
-      </p>
+      <h1>Downhill</h1>
+      <canvas id="game" aria-label="Downhill skiing game"></canvas>
+      <p id="score-hud" class="score-hud" hidden></p>
+      <div id="end-panel" class="end-panel" hidden>
+        <p id="end-message" class="end-message"></p>
+        <p id="end-score" class="end-score"></p>
+        <div class="leaderboard">
+          <h2>Local best runs</h2>
+          <p class="leaderboard-note">Saved on this device only — not an online leaderboard.</p>
+          <ol id="leaderboard-list"></ol>
+        </div>
+      </div>
     </main>
     <script src="../scripts/main.ts"></script>
   </body>
